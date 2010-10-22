@@ -8,7 +8,7 @@
     </parent>
     <artifactId>qc</artifactId>
     <packaging>hpi</packaging>
-    <version>1.0</version>
+    <version>1.0-SNAPSHOT</version>
     <name>Hudson Quality Center Plug-in</name>
     <url>http://wiki.hudson-ci.org/display/HUDSON/Quality+Center+Plugin</url>
 
