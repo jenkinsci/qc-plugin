@@ -1,0 +1,37 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.jvnet.hudson.plugins</groupId>
+        <artifactId>plugin</artifactId>
+        <version>1.358</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <artifactId>qc</artifactId>
+    <packaging>hpi</packaging>
+    <version>1.0</version>
+    <name>Hudson Quality Center Plug-in</name>
+    <url>http://wiki.hudson-ci.org/display/HUDSON/Quality+Center+Plugin</url>
+
+    <developers>
+        <developer>
+            <id>tmaurel</id>
+            <name>Thomas Maurel</name>
+            <timezone>+1</timezone>
+        </developer>
+        <developer>
+            <id>rseguy</id>
+            <name>Romain Seguy</name>
+            <timezone>+1</timezone>
+        </developer>
+    </developers>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.jvnet.com4j</groupId>
+            <artifactId>com4j</artifactId>
+            <version>20070717</version>
+        </dependency>
+    </dependencies>
+</project>
