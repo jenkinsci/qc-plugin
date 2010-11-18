@@ -1,6 +1,7 @@
 ' The MIT License
 '
-' Copyright (c) 2010, Manufacture Française des Pneumatiques Michelin, Thomas Maurel
+' Copyright (c) 2010, Manufacture Française des Pneumatiques Michelin, Thomas Maurel,
+' CollabNet, Johannes Nicolai
 '
 ' Permission is hereby granted, free of charge, to any person obtaining a copy
 ' of this software and associated documentation files (the "Software"), to deal
@@ -159,7 +160,7 @@ Class QCTestRunner
     Else
         tdConnection.InitConnectionEx QCServerURL
         If tdConnection.Connected = False Then
-          errorMsg = "Cant connect to server"
+          errorMsg = "Can't connect to server"
         Else
             WScript.StdOut.WriteLine "Connected to server " & QCServerURL
             tdConnection.Login QCLogin, QCPass
@@ -224,71 +225,75 @@ Class QCTestRunner
         WScript.StdOut.WriteLine generateLine(50)
 
         Set Scheduler = targetTestSet.StartExecution("")
-        Set tsTestFactory = targetTestSet.TSTestFactory
-        Set tdFilter = tsTestFactory.Filter
-        tdFilter.Filter("TC_CYCLE_ID") = targetTestSet.ID
-        Set tList = tsTestFactory.NewList(tdFilter.Text)
-        WScript.StdOut.WriteBlankLines(2)
-        WScript.StdOut.WriteLine generateLine(50)
-        WScript.StdOut.WriteLine "| " & addBlankSpaces("Test Name", 15) &  " | " & addBlankSpaces("ID", 6) & " | " & addBlankSpaces("Host", 20) &  "|"
-        WScript.StdOut.WriteLine generateLine(50)
-
-        ReDim tests(tList.Count - 1)
-
-        For Each test In tList
-          WScript.StdOut.WriteLine "| " & addBlankSpaces(test.Name, 15) &  " | " & addBlankSpaces(test.ID, 6) & " | " & addBlankSpaces(test.HostName, 20) &  "|"
+	    If Scheduler Is Nothing Then
+	      errorMsg = "Could not instantiate test set scheduler"
+   	    Else
+          Set tsTestFactory = targetTestSet.TSTestFactory
+          Set tdFilter = tsTestFactory.Filter
+          tdFilter.Filter("TC_CYCLE_ID") = targetTestSet.ID
+          Set tList = tsTestFactory.NewList(tdFilter.Text)
+          WScript.StdOut.WriteBlankLines(2)
           WScript.StdOut.WriteLine generateLine(50)
-          Scheduler.RunOnHost(test.ID) = test.HostName
-        Next
-
-        Scheduler.RunAllLocally = False
-        Scheduler.run
-        WScript.StdOut.WriteBlankLines(2)
-        WScript.StdOut.WriteLine "Running-Tests..."
-        WScript.StdOut.WriteBlankLines(2)
-        Set executionStatus = Scheduler.ExecutionStatus
-
-        While ((tsExecutionFinished = False) And (iter < timeout))
-          iter = iter + 5
-          executionStatus.RefreshExecStatusInfo "all", True
-          tsExecutionFinished = executionStatus.Finished
-          WScript.Sleep( 5000 )
-        Wend
-
-        If iter < timeout Then
-
-          WScript.StdOut.WriteLine generateLine(50)
-          WScript.StdOut.WriteLine "| " & addBlankSpaces("Test", 22) &  " | " & addBlankSpaces("Result", 22) & "|"
+          WScript.StdOut.WriteLine "| " & addBlankSpaces("Test Name", 15) &  " | " & addBlankSpaces("ID", 6) & " | " & addBlankSpaces("Host", 20) &  "|"
           WScript.StdOut.WriteLine generateLine(50)
 
-          For i = 1 To executionStatus.Count
-            Set qTest = New QCTest
-            Set testExecStatusObj = executionStatus.Item(i)
+          ReDim tests(tList.Count - 1)
 
-            Set currentTest = targetTestSet.TSTestFactory.Item(testExecStatusObj.TSTestId)
-
-            qTest.Name = currentTest.Name
-            qTest.Duration = currentTest.LastRun.Field("RN_DURATION")
-
-            If Not (currentTest.LastRun.Status = "Passed") Then
-              Set qFailure = New QCFailure
-              qFailure.Desc = testExecStatusObj.Message
-              qFailure.Name = currentTest.LastRun.Status
-              Set qTest.Failure = qFailure
-            Else
-              Set qTest.Failure = Nothing
-            End If
-
-            Set tests(i - 1) = qTest
-              WScript.StdOut.WriteLine "| " & addBlankSpaces(currentTest.Name, 22) &  " | " & addBlankSpaces(currentTest.LastRun.Status, 22) & "|"
-              WScript.StdOut.WriteLine generateLine(50)
+          For Each test In tList
+            WScript.StdOut.WriteLine "| " & addBlankSpaces(test.Name, 15) &  " | " & addBlankSpaces(test.ID, 6) & " | " & addBlankSpaces(test.HostName, 20) &  "|"
+            WScript.StdOut.WriteLine generateLine(50)
+            Scheduler.RunOnHost(test.ID) = test.HostName
           Next
 
+          Scheduler.RunAllLocally = False
+          Scheduler.run
           WScript.StdOut.WriteBlankLines(2)
-          WScript.StdOut.WriteLine "Scheduler finished around " & CStr(Now)
-        Else
-          errorMsg = "Timed out"
-        End If
+          WScript.StdOut.WriteLine "Running-Tests..."
+          WScript.StdOut.WriteBlankLines(2)
+          Set executionStatus = Scheduler.ExecutionStatus
+
+          While ((tsExecutionFinished = False) And (iter < timeout))
+            iter = iter + 5
+            executionStatus.RefreshExecStatusInfo "all", True
+            tsExecutionFinished = executionStatus.Finished
+            WScript.Sleep( 5000 )
+          Wend
+
+          If iter < timeout Then
+
+            WScript.StdOut.WriteLine generateLine(50)
+            WScript.StdOut.WriteLine "| " & addBlankSpaces("Test", 22) &  " | " & addBlankSpaces("Result", 22) & "|"
+            WScript.StdOut.WriteLine generateLine(50)
+
+            For i = 1 To executionStatus.Count
+              Set qTest = New QCTest
+              Set testExecStatusObj = executionStatus.Item(i)
+
+              Set currentTest = targetTestSet.TSTestFactory.Item(testExecStatusObj.TSTestId)
+
+              qTest.Name = currentTest.Name
+              qTest.Duration = currentTest.LastRun.Field("RN_DURATION")
+
+              If Not (currentTest.LastRun.Status = "Passed") Then
+                Set qFailure = New QCFailure
+                qFailure.Desc = testExecStatusObj.Message
+                qFailure.Name = currentTest.LastRun.Status
+                Set qTest.Failure = qFailure
+              Else
+                Set qTest.Failure = Nothing
+              End If
+
+              Set tests(i - 1) = qTest
+                WScript.StdOut.WriteLine "| " & addBlankSpaces(currentTest.Name, 22) &  " | " & addBlankSpaces(currentTest.LastRun.Status, 22) & "|"
+                WScript.StdOut.WriteLine generateLine(50)
+            Next
+
+            WScript.StdOut.WriteBlankLines(2)
+            WScript.StdOut.WriteLine "Scheduler finished around " & CStr(Now)
+          Else
+            errorMsg = "Timed out"
+          End If
+	    End If
       End If
     End If
   End Sub
