@@ -1,7 +1,7 @@
 ' The MIT License
 '
-' Copyright (c) 2010, Manufacture Française des Pneumatiques Michelin, Thomas Maurel,
-' CollabNet, Johannes Nicolai
+' Copyright (c) 2010-2011, Manufacture Française des Pneumatiques Michelin, Thomas Maurel,
+' CollabNet, Johannes Nicolai, Shane Smart
 '
 ' Permission is hereby granted, free of charge, to any person obtaining a copy
 ' of this software and associated documentation files (the "Software"), to deal
@@ -242,7 +242,12 @@ Class QCTestRunner
           For Each test In tList
             WScript.StdOut.WriteLine "| " & addBlankSpaces(test.Name, 15) &  " | " & addBlankSpaces(test.ID, 6) & " | " & addBlankSpaces(test.HostName, 20) &  "|"
             WScript.StdOut.WriteLine generateLine(50)
-            Scheduler.RunOnHost(test.ID) = test.HostName
+
+    				If test.HostName = "" Then
+    					Scheduler.RunOnHost(test.ID) = "localhost"
+    				Else 
+    					Scheduler.RunOnHost(test.ID) = test.HostName
+    				End If
           Next
 
           Scheduler.RunAllLocally = False
