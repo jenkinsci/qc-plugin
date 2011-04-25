@@ -1,7 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2010, Manufacture Française des Pneumatiques Michelin, Thomas Maurel
+ * Copyright (c) 2010-2011, Manufacture Française des Pneumatiques Michelin,
+ * Thomas Maurel, Romain Seguy
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -51,6 +52,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.net.URL;
+import java.util.Arrays;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -67,66 +69,37 @@ public class QualityCenter extends Builder {
 
   private final static String VB_SCRIPT_NAME = "runTestSet.vbs";
 
-  /**
-   * Quality Center installation name.
-   */
+  public final static String RUN_MODE_LOCAL = "RUN_LOCAL";
+  public final static String RUN_MODE_PLANNED_HOST = "RUN_PLANNED_HOST";
+  public final static String RUN_MODE_REMOTE = "RUN_REMOTE";
+  public final static String[] RUN_MODES = { RUN_MODE_PLANNED_HOST, RUN_MODE_REMOTE, RUN_MODE_LOCAL };
+
+  /** Quality Center installation name. */
   private final String qcClientInstallationName;
-
-  /**
-   * QTP Addin for Quality Center installation name.
-   */
+  /** QTP Addin for Quality Center installation name. */
   private final String qcQTPAddinInstallationName;
-
-  /**
-   * Quality Center server URL.
-   */
+  /** Quality Center server URL. */
   private final String qcServerURL;
-
-  /**
-   * Username to log into the Quality Center server.
-   */
+  /** Username to log into the Quality Center server. */
   private final String qcLogin;
-
-  /**
-   * The password associated to the username to log into the Quality Center server.
-   */
+  /** The password associated to the username to log into the Quality Center server. */
   private final String qcPass;
-
-  /**
-   * The domain where the Quality Center project is located.
-   */
+  /** The domain where the Quality Center project is located. */
   private final String qcDomain;
-
-  /**
-   * The Quality Center project to connect to.
-   */
+  /** The Quality Center project to connect to. */
   private final String qcProject;
-
-  /**
-   * The folder where the TestSet to run is located.
-   */
+  /** The folder where the TestSet to run is located. */
   private final String qcTSFolder;
-
-  /**
-   * The name of the TestSet to run.
-   */
+  /** The name of the TestSet to run. */
   private final String qcTSName;
-
-  /**
-   * The name of the report file.
-   */
+  /** The name of the report file. */
   private final String qcTSLogFile;
-
-  /**
-   * Timeout
-   */
+  /** Timeout */
   private final String qcTimeOut;
-  
-  /**
-   * The parsed name (env vars) of the report file.
-   */
+  /** The parsed name (env vars) of the report file. */
   private String parsedQcTSLogFile;
-
+  private String runMode;
+  private String runHost;
 
   @DataBoundConstructor
   public QualityCenter(
@@ -140,7 +113,9 @@ public class QualityCenter extends Builder {
             String qcTSFolder,
             String qcTSName,
             String qcTSLogFile,
-            String qcTimeOut) {
+            String qcTimeOut,
+            String runMode,
+            String runHost) {
     this.qcClientInstallationName = qcClientInstallationName;
     this.qcQTPAddinInstallationName = qcQTPAddinInstallationName;
     this.qcServerURL = qcServerURL;
@@ -152,6 +127,18 @@ public class QualityCenter extends Builder {
     this.qcTSName = qcTSName;
     this.qcTSLogFile = qcTSLogFile;
     this.qcTimeOut = qcTimeOut;
+    if(Arrays.asList(RUN_MODES).contains(runMode)) {
+      this.runMode = runMode;
+    }
+    else {
+      this.runMode = RUN_MODE_PLANNED_HOST;
+    }
+    if(this.runMode.equals(RUN_MODE_REMOTE)) {
+      this.runHost = runHost;
+    }
+    else {
+      this.runHost = "";
+    }
   }
 
   public String getQcDomain() {
@@ -200,6 +187,14 @@ public class QualityCenter extends Builder {
 
   public String getQcTimeOut() {
     return qcTimeOut;
+  }
+  
+  public String getRunMode() {
+    return runMode;
+  }
+
+  public String getRunHost() {
+    return runHost;
   }
 
   public static String getVbScriptName() {
@@ -360,6 +355,10 @@ public class QualityCenter extends Builder {
     args.add(Util.replaceMacro(env.expand(this.qcTSName), varResolver));
     args.add(this.parsedQcTSLogFile);
     args.add(this.qcTimeOut);
+    args.add(runMode);
+    if(runMode.equals(RUN_MODE_REMOTE)) {
+      args.add(runHost);
+    }
 
     // Remove qc specific environment variables
     removeEnvVars(env);
@@ -488,6 +487,17 @@ public class QualityCenter extends Builder {
       return FormValidation.ok();
     }
 
+    /**
+     * Returns the possible run modes.
+     *
+     * <p>This method needs to be placed here so that the list can be
+     * accessible from QualityCenter's config.jelly file: config.jelly
+     * is not able to access such a method if it is placed, even statically,
+     * directly into QualityCenter.</p>
+     */
+    public String[] getLanguages() {
+        return QualityCenter.RUN_MODES;
+    }
   }
 
 }

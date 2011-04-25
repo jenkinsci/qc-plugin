@@ -1,7 +1,8 @@
 ' The MIT License
 '
-' Copyright (c) 2010-2011, Manufacture Française des Pneumatiques Michelin, Thomas Maurel,
-' CollabNet, Johannes Nicolai, Shane Smart
+' Copyright (c) 2010-2011, Manufacture Française des Pneumatiques Michelin,
+' Thomas Maurel, CollabNet, Johannes Nicolai, Shane Smart, Mickael Beluet,
+' Romain Seguy
 '
 ' Permission is hereby granted, free of charge, to any person obtaining a copy
 ' of this software and associated documentation files (the "Software"), to deal
@@ -20,17 +21,6 @@
 ' LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 ' OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 ' THE SOFTWARE.
-
-Function stripTags(str)
-  Dim regex
-  Set regex = New RegExp
-  With regex
-    .Pattern = "<|>"
-    .IgnoreCase = True
-    .Global = True
-  End With
-  stripTags = regex.Replace(str, "")
-End Function
 
 Function addBlankSpaces(str, length)
   Dim strlen
@@ -54,7 +44,11 @@ Function generateLine(length)
   generateLine = line & "+"
 End Function
 
-Function prefixWithZero(str, length) 
+Sub logMessage(p_szMessage)
+  WScript.StdOut.WriteLine Date & " " & Time & " : " & p_szMessage
+End Sub
+
+Function prefixWithZero(str, length)
   Dim pre
   If length > len(str) then
     pre = String(length - len(str), "0")
@@ -62,7 +56,20 @@ Function prefixWithZero(str, length)
   prefixWithZero = pre & str
 End Function 
 
-Class QCFailure 
+Function stripTags(str)
+  Dim regex
+  Set regex = New RegExp
+  With regex
+    .Pattern = "<|>"
+    .IgnoreCase = True
+    .Global = True
+  End With
+  stripTags = regex.Replace(str, "")
+End Function
+
+' ------------------------------------------------------------------------------
+
+Class QCFailure
 
   Private fName
   Private fDesc
@@ -82,18 +89,18 @@ Class QCFailure
   Public Property Let Desc(iDesc)
     fDesc = iDesc
   End Property
-		
+    
 End Class
+
+' ------------------------------------------------------------------------------
 
 Class QCTest 
 
-  Private tName
-  Private tDuration
-  Private tFailure
-
-  Public Property Get Name
-    Name = tName
-  End Property
+  Private tName         ' test case name
+  Private tDuration     ' duration
+  Private tStatus       ' current status
+  Private tFailure      ' object failure
+  Private tFailureDesc  ' failure description
 
   Public Property Get Duration
     Duration = tDuration
@@ -101,6 +108,18 @@ Class QCTest
 
   Public Property Get Failure
     Set Failure = tFailure
+  End Property
+
+  Public Property Get FailureDesc
+    FailureDesc = tFailureDesc
+  End Property
+
+  Public Property Get Name
+    Name = tName
+  End Property
+
+  Public Property Get Status
+    Status = tStatus
   End Property
 
   Public Property Let Name(iName)
@@ -114,8 +133,18 @@ Class QCTest
   Public Property Set Failure(iFailure)
     Set tFailure = iFailure
   End Property
-	
+
+  Public Property Let FailureDesc(iFailureDesc)
+    tFailureDesc = iFailureDesc
+  End Property
+
+  Public Property Let Status(iStatus)
+    tStatus = iStatus
+  End Property
+
 End Class
+
+' ------------------------------------------------------------------------------
 
 Class QCTestRunner
 
@@ -148,7 +177,6 @@ Class QCTestRunner
     ErrorMessage = errorMsg
   End Property
 
-
   Public Sub ConnectToProject(QCServerURL, QCLogin, QCPass, QCDomain, QCProject)
     On Error Resume Next
     hostName = QCServerURL
@@ -156,30 +184,31 @@ Class QCTestRunner
     project = QCProject
 
     If tdConnection Is Nothing Then
-      errorMsg = "Cant create TDConnection Object"
+      errorMsg = "Can't create TDConnection Object"
     Else
-        tdConnection.InitConnectionEx QCServerURL
-        If tdConnection.Connected = False Then
-          errorMsg = "Can't connect to server"
+      tdConnection.InitConnectionEx QCServerURL
+      If tdConnection.Connected = False Then
+        errorMsg = "Can't connect to server"
+      Else
+        WScript.StdOut.WriteLine "Connected to server " & QCServerURL
+        tdConnection.Login QCLogin, QCPass
+        If tdConnection.LoggedIn = False Then
+          errorMsg = "Can't login on QC server"
         Else
-            WScript.StdOut.WriteLine "Connected to server " & QCServerURL
-            tdConnection.Login QCLogin, QCPass
-            If tdConnection.LoggedIn = False Then
-              errorMsg = "Can't login on QC server"
-            Else
-              WScript.StdOut.WriteLine "Logged in with user " & QCLogin
-              tdConnection.Connect QCDomain, QCProject
-              If tdConnection.ProjectConnected = False Then
-                errorMsg = "Can't open Domain/Project"
-              Else
-                WScript.StdOut.WriteLine "Opened project " & QCDomain & "\" & QCProject
-              End If
-            End If
+          WScript.StdOut.WriteLine "Logged in with user " & QCLogin
+          tdConnection.Connect QCDomain, QCProject
+          If tdConnection.ProjectConnected = False Then
+            errorMsg = "Can't open Domain/Project"
+          Else
+            WScript.StdOut.WriteLine "Opened project " & QCDomain & "\" & QCProject
+          End If
         End If
+      End If
     End If
   End Sub
 
-  Public Sub RunTestSet(tsFolderName, tsName, timeout)
+  ' runMode: RUN_LOCAL, RUN_REMOTE or RUN_PLANNED_HOST
+  Public Sub RunTestSet(tsFolderName, tsName, timeout, runMode, runHost)
     On Error Resume Next
     Dim tsFactory
     Dim tsTestFactory
@@ -218,79 +247,154 @@ Class QCTestRunner
       Else
         Set targetTestSet = tsList.Item(1)
         WScript.StdOut.WriteBlankLines(2)
-        WScript.StdOut.WriteLine generateLine(50)
-        WScript.StdOut.WriteLine "| " & addBlankSpaces("TestSet Name", 38) &  " | " & addBlankSpaces("ID", 6) & "|"
-        WScript.StdOut.WriteLine generateLine(50)
-        WScript.StdOut.WriteLine "| " & addBlankSpaces(tsName, 38) &          " | " & addBlankSpaces(targetTestSet.ID, 6) &  "|"
-        WScript.StdOut.WriteLine generateLine(50)
+        WScript.StdOut.WriteLine generateLine(100)
+        WScript.StdOut.WriteLine "| " & addBlankSpaces("TestSet Name", 88) &  " | " & addBlankSpaces("ID", 6) & "|"
+        WScript.StdOut.WriteLine generateLine(100)
+        WScript.StdOut.WriteLine "| " & addBlankSpaces(tsName, 88) &          " | " & addBlankSpaces(targetTestSet.ID, 6) &  "|"
+        WScript.StdOut.WriteLine generateLine(100)
 
+        ' start the scheduler
         Set Scheduler = targetTestSet.StartExecution("")
-	    If Scheduler Is Nothing Then
-	      errorMsg = "Could not instantiate test set scheduler"
-   	    Else
+
+        If Scheduler Is Nothing Then
+          errorMsg = "Could not instantiate test set scheduler"
+        Else
           Set tsTestFactory = targetTestSet.TSTestFactory
           Set tdFilter = tsTestFactory.Filter
           tdFilter.Filter("TC_CYCLE_ID") = targetTestSet.ID
           Set tList = tsTestFactory.NewList(tdFilter.Text)
+
+          ' set up for the run depending on where the test instances are to execute
+          Select Case runMode
+            Case "RUN_LOCAL"
+              ' run all tests on the local machine
+              Scheduler.RunAllLocally = True
+
+            Case "RUN_REMOTE"
+              ' run tests on a specified remote machine
+              Scheduler.TdHostName = RunHost
+              ' RunAllLocally must not be set for remote invocation of tests. As
+              ' such, do not do this: Scheduler.RunAllLocally = False
+
+            Case "RUN_PLANNED_HOST"
+              ' run on the hosts as planned in the test set
+              Scheduler.RunAllLocally = False
+          End Select
+
           WScript.StdOut.WriteBlankLines(2)
-          WScript.StdOut.WriteLine generateLine(50)
-          WScript.StdOut.WriteLine "| " & addBlankSpaces("Test Name", 15) &  " | " & addBlankSpaces("ID", 6) & " | " & addBlankSpaces("Host", 20) &  "|"
-          WScript.StdOut.WriteLine generateLine(50)
+          WScript.StdOut.WriteLine "| " & addBlankSpaces("Number of tests: " & tList.Count, 97) &  "|"
+          WScript.StdOut.WriteLine generateLine(100)
+          WScript.StdOut.WriteLine "| " & addBlankSpaces("Test Name", 65) &  " | " & addBlankSpaces("ID", 6) & " | " & addBlankSpaces("Host", 20) &  "|"
+          WScript.StdOut.WriteLine generateLine(100)
 
           ReDim tests(tList.Count - 1)
 
+          i = 1
           For Each test In tList
-            WScript.StdOut.WriteLine "| " & addBlankSpaces(test.Name, 15) &  " | " & addBlankSpaces(test.ID, 6) & " | " & addBlankSpaces(test.HostName, 20) &  "|"
-            WScript.StdOut.WriteLine generateLine(50)
+            Select Case runMode
+              Case "RUN_LOCAL"
+                WScript.StdOut.WriteLine "| " & addBlankSpaces(test.Name, 65) &  " | " & addBlankSpaces(test.ID, 6) & " | " & addBlankSpaces(RunHost, 20) &  "|"
+                WScript.StdOut.WriteLine generateLine(100)
+                Scheduler.RunOnHost(test.ID) = runHost
+      
+              Case "RUN_REMOTE"
+                WScript.StdOut.WriteLine "| " & addBlankSpaces(test.Name, 65) &  " | " & addBlankSpaces(test.ID, 6) & " | " & addBlankSpaces(RunHost, 20) &  "|"
+                WScript.StdOut.WriteLine generateLine(100)
+                Scheduler.RunOnHost(test.ID) = runHost
+                
+              Case "RUN_PLANNED_HOST"
+                WScript.StdOut.WriteLine "| " & addBlankSpaces(test.Name, 65) &  " | " & addBlankSpaces(test.ID, 6) & " | " & addBlankSpaces(test.HostName, 20) &  "|"
+                WScript.StdOut.WriteLine generateLine(100)
+                Scheduler.RunOnHost(test.ID) = test.HostName
+            End Select
 
-    				If test.HostName = "" Then
-    					Scheduler.RunOnHost(test.ID) = "localhost"
-    				Else 
-    					Scheduler.RunOnHost(test.ID) = test.HostName
-    				End If
+            ' initialization of the test's default values which is No Run (in
+            ' order to handle specific cases in which test are not run)
+
+            Set qTest = New QCTest
+            qTest.Name = test.Name
+            qTest.Status = "No Run"
+            qTest.Duration = 0
+
+            Set qFailure = New QCFailure
+            qFailure.Name = "No Run"
+            qFailure.Desc = "No Run"
+
+            Set qTest.Failure = qFailure
+
+            Set tests(i - 1) = qTest
+
+            i = i + 1
           Next
 
-          Scheduler.RunAllLocally = False
+          ' tests are actually run 
           Scheduler.run
           WScript.StdOut.WriteBlankLines(2)
           WScript.StdOut.WriteLine "Running-Tests..."
+          WScript.StdOut.WriteLine "Scheduler started around " & CStr(Now)
           WScript.StdOut.WriteBlankLines(2)
           Set executionStatus = Scheduler.ExecutionStatus
 
+          ' let's wait for the tests to end ("normally" or because of the timeout
           While ((tsExecutionFinished = False) And (iter < timeout))
             iter = iter + 5
             executionStatus.RefreshExecStatusInfo "all", True
             tsExecutionFinished = executionStatus.Finished
+
+            WScript.StdOut.WriteLine generateLine(100)
+            WScript.StdOut.WriteLine "| " & addBlankSpaces(CStr(Now), 97) & "|"
+            For i = 1 To executionStatus.Count
+              Set testExecStatusObj = executionStatus.Item(i)
+              Set currentTest = targetTestSet.TSTestFactory.Item(testExecStatusObj.TSTestId)
+        
+              WScript.StdOut.WriteLine "| " & addBlankSpaces(testExecStatusObj.TSTestId, 8) & _
+                      addBlankSpaces(currentTest.Name, 70) & _
+                      addBlankSpaces(testExecStatusObj.Status, 19) & "|"
+            Next
+            WScript.StdOut.WriteLine generateLine(100)
+
             WScript.Sleep( 5000 )
           Wend
 
           If iter < timeout Then
-
-            WScript.StdOut.WriteLine generateLine(50)
-            WScript.StdOut.WriteLine "| " & addBlankSpaces("Test", 22) &  " | " & addBlankSpaces("Result", 22) & "|"
-            WScript.StdOut.WriteLine generateLine(50)
+            WScript.StdOut.WriteBlankLines(2)
+            WScript.StdOut.WriteLine "| " & addBlankSpaces("Tests results", 97) &  "|"
+            WScript.StdOut.WriteLine generateLine(100)
+            WScript.StdOut.WriteLine "| " & addBlankSpaces("Test", 72) &  " | " & addBlankSpaces("Result", 22) & "|"
+            WScript.StdOut.WriteLine generateLine(100)
 
             For i = 1 To executionStatus.Count
-              Set qTest = New QCTest
               Set testExecStatusObj = executionStatus.Item(i)
-
               Set currentTest = targetTestSet.TSTestFactory.Item(testExecStatusObj.TSTestId)
 
-              qTest.Name = currentTest.Name
-              qTest.Duration = currentTest.LastRun.Field("RN_DURATION")
+              ' we search the id of the test in the tests list in order to update it
+              l_id = GetIdTestName(currentTest.Name) 
+              Set qTest = tests(l_id)
 
-              If Not (currentTest.LastRun.Status = "Passed") Then
-                Set qFailure = New QCFailure
-                qFailure.Desc = testExecStatusObj.Message
-                qFailure.Name = currentTest.LastRun.Status
-                Set qTest.Failure = qFailure
-              Else
+              ' duration and status are updated according to the run
+              qTest.Duration = currentTest.LastRun.Field("RN_DURATION")
+              qTest.Status = testExecStatusObj.Status
+
+              If instr(1, testExecStatusObj.Status, "Passed") Then
                 Set qTest.Failure = Nothing
+              Else
+                Set qFailure = New QCFailure
+                qFailure.Name = testExecStatusObj.Status
+                qFailure.Desc = testExecStatusObj.Message
+                Set qTest.Failure = qFailure
+          
+                ' let's get some more info for addition in the result XML file
+                If testExecStatusObj.Status = "FinishedFailed" Then
+                  qTest.FailureDesc = GenerateFailedLog(currentTest.LastRun)
+                Else
+                  qTest.FailureDesc = ""
+                End if
               End If
 
-              Set tests(i - 1) = qTest
-                WScript.StdOut.WriteLine "| " & addBlankSpaces(currentTest.Name, 22) &  " | " & addBlankSpaces(currentTest.LastRun.Status, 22) & "|"
-                WScript.StdOut.WriteLine generateLine(50)
+              Set tests(l_id) = qTest
+
+              WScript.StdOut.WriteLine "| " & addBlankSpaces(currentTest.Name, 72) &  " | " & addBlankSpaces(testExecStatusObj.Status, 22) & "|"
+              WScript.StdOut.WriteLine generateLine(100)
             Next
 
             WScript.StdOut.WriteBlankLines(2)
@@ -298,11 +402,46 @@ Class QCTestRunner
           Else
             errorMsg = "Timed out"
           End If
-	    End If
-      End If
-    End If
+        End If ' endif scheduler
+      End If ' endif test set
+    End If ' endif test set folder
   End Sub
 
+  Function GenerateFailedLog(p_Test)
+    Set stList = p_Test.StepFactory.NewList("")   
+
+    l_szReturn = ""
+    l_szFailedMessage = ""
+
+    ' loop on each step in the steps
+    For Each Step In stList
+      Select Case Step.Status
+        Case "Failed"
+          l_szFailedMessage = l_szFailedMessage & Step.Field("ST_DESCRIPTION") & vbcrlf
+        Case Else
+      End Select
+    Next
+
+    GenerateFailedLog = l_szFailedMessage
+  End Function
+  
+  Public Function GetIdTestName(p_szName)
+    GetIdTestName = -1
+
+    For i = 0 to Ubound(tests)
+      Set qTest = tests(i)
+  
+      If qTest Is Nothing Then
+        ' do nothing
+      Else
+        If qTest.Name = p_szName then
+          GetIdTestName = i
+          Exit For
+        End if
+      End if
+    Next
+  End function
+  
   Public Sub Disconnect
     On Error Resume Next
     If tdConnection.ProjectConnected Then
@@ -319,7 +458,6 @@ Class QCTestRunner
 
   Public Sub WriteToXML(fileName)
     Dim logShell
-    Dim logFilePath
     Dim currentDate
     Dim numError
     Dim numFailure
@@ -330,19 +468,26 @@ Class QCTestRunner
 
     WScript.StdOut.WriteLine "Creating report..."
     currentDate = YEAR(Date()) & _
-                                    "-" & prefixWithZero(Month(Date()),2) & _
-                                    "-" & prefixWithZero(Day(Date()),2) & _
-                                    "T" & prefixWithZero(Hour(Now()),2) & _
-                                    ":" & prefixWithZero(Minute(Now()),2) & _
-                                    ":" & prefixWithZero(Second(Now()),2)
+            "-" & prefixWithZero(Month(Date()),2) & _
+            "-" & prefixWithZero(Day(Date()),2) & _
+            "T" & prefixWithZero(Hour(Now()),2) & _
+            ":" & prefixWithZero(Minute(Now()),2) & _
+            ":" & prefixWithZero(Second(Now()),2)
 
-    Set logShell = CreateObject("Wscript.Shell")
-    logFilePath = logShell.CurrentDirectory & "\" & fileName
+    WScript.StdOut.WriteBlankLines(2)
+    WScript.StdOut.WriteLine "Generating report file"
+    WScript.StdOut.WriteLine "Report file path: " & fileName
+    WScript.StdOut.WriteBlankLines(1)
+
     Set logShell = Nothing
     Set objStream = CreateObject("ADODB.Stream" )
     objStream.Open
     objStream.Position = 0
     objStream.Charset = "UTF-8"
+
+    WScript.StdOut.WriteLine generateLine(100)
+    WScript.StdOut.WriteLine "| " & addBlankSpaces("Test", 72) &  " | " & addBlankSpaces("Statut", 22) & "|"
+    WScript.StdOut.WriteLine generateLine(100)
 
     totalTime = 0
     numFailure = 0
@@ -351,52 +496,73 @@ Class QCTestRunner
     If Not (errorMsg = "") Then
       numError = 1
       body = vbTab & "<error message=""" & errorMsg & """ type=""fatal"">" & vbCrLf & _
-                      vbTab & vbTab & errorMsg & vbCrLf & _
-                      vbTab & "</error>"
+                  vbTab & vbTab & errorMsg & vbCrLf & _
+                  vbTab & "</error>"
     Else
       numError = 0
       body = ""
       For Each test In tests
         numTest = numTest + 1
-        totalTime = totalTime + test.Duration
-        body = 	body & vbTab & "<testcase classname=""" & domain & "." & project & "." & folder & "." & name & """ " & _
-                                                        "name=""" & test.Name & """ " & _
-                                                        "time=""" & test.Duration  & ".0"" "
 
-        If test.Failure Is Nothing Then
-          body = body & "/>" & vbCrLf
+        If test Is Nothing Then
+          ' do nothing
         Else
-          body = body & ">" & vbCrLf
+          totalTime = totalTime + test.Duration
+          body =  body & vbTab & "<testcase classname=""" & domain & "." & project & "." & folder & "." & name & """ " & _
+                  "name=""" & test.Name & """ " & _
+                  "time=""" & test.Duration  & ".0"" "
+          lStatus = ""
 
-          body = body & vbTab & vbTab & "<failure message=""" & stripTags(test.Failure.Desc) & """ type=""" & test.Failure.name & """>" & vbCrLf & _
-                                    vbTab & vbTab & vbTab & test.Failure.Name & " : " & stripTags(test.Failure.Desc) & vbCrLf & _
-                                    vbTab & vbTab & "</failure>" & vbCrLf
+          If test.Failure Is Nothing Then
+            body = body & "/>" & vbCrLf
+            lStatus = "Passed"
+  
+          Elseif test.Status = "No Run" Then  'Cas ou le test n'a pas tourné
+            body = body & ">" & vbCrLf
+            body = body & vbTab & vbTab & "<failure message=""" & test.Status & """ type=""" & test.Status & """>" & vbCrLf & _
+                    test.Status & vbCrLf & "</failure>" & vbCrLf
+                        
+            body = body & vbTab & "</testcase>" & vbCrLf
+            numFailure = numFailure + 1
+            lStatus = "No Run"
+          Else
+            body = body & ">" & vbCrLf
+  
+            body = body & vbTab & vbTab & "<failure message=""" & stripTags(test.Failure.Desc) & """ type=""" & test.Failure.name & """>" & vbCrLf & _
+                    test.Failure.Name & " : " & stripTags(test.FailureDesc) & vbCrLf & _
+                    "</failure>" & vbCrLf
+  
+            body = body & vbTab & "</testcase>" & vbCrLf
+            numFailure = numFailure + 1
+            lStatus = test.Failure.Name
+          End If
 
-          body = body & vbTab & "</testcase>" & vbCrLf
-          numFailure = numFailure + 1
-        End If
+          WScript.StdOut.WriteLine "| " & addBlankSpaces(test.Name, 72) &  " | " & addBlankSpaces(lStatus, 22) & "|"
+          WScript.StdOut.WriteLine generateLine(100)
+        
+        End if
       Next
     End If
 
     header = header & "<testsuite errors=""" & numError & """ " & _
-                                                    "failures=""" & numFailure & """  " & _
-                                                    "hostname=""" & hostName &  """  " & _
-                                                    "name=""" & domain & "." & project & "." & folder & "." & name & """  " & _
-                                                    "tests=""" & numTest & """ " & _
-                                                    "time=""" & totalTime & ".0"" " & _
-                                                    "timestamp=""" & currentDate & """>"
+            "failures=""" & numFailure & """  " & _
+            "hostname=""" & hostName &  """  " & _
+            "name=""" & domain & "." & project & "." & folder & "." & name & """  " & _
+            "tests=""" & numTest & """ " & _
+            "time=""" & totalTime & ".0"" " & _
+            "timestamp=""" & currentDate & """>"
     header = header & body
     header = header & "</testsuite>"
     objStream.WriteText header
-    objStream.SaveToFile logFilePath
+    objStream.SaveToFile fileName
     objStream.Close
     WScript.StdOut.WriteLine "Report Created"
     
   End Sub
-	
-End Class	
+  
+End Class 
 
-' --- Main ---
+' ------------------------------------ Main ------------------------------------
 
 Dim args
 Dim test
@@ -404,22 +570,93 @@ Dim qcTimeout
 Set args = WScript.Arguments
 Set test = New QCTestRunner
 
-If args.Count > 8 Then
-  qcTimeout = CInt(args.Item(8))
+If args.Count<9 Or args.Count>11 Then
+
+  lszMessage = "Required arguments:" + vbcrlf
+  lszMessage = lszMessage + "Arg1 : QC Server" + vbcrlf
+  lszMessage = lszMessage + "Arg2 : QC UserName" + vbcrlf
+  lszMessage = lszMessage + "Arg3 : QC Password" + vbcrlf
+  lszMessage = lszMessage + "Arg4 : QC Domain" + vbcrlf
+  lszMessage = lszMessage + "Arg5 : QC Project" + vbcrlf
+  lszMessage = lszMessage + "Arg6 : QC TestSetFolder" + vbcrlf
+  lszMessage = lszMessage + "Arg7 : QC TestSetName" + vbcrlf
+  lszMessage = lszMessage + "Arg8 : XML Junit File" + vbcrlf
+  lszMessage = lszMessage + "Arg9 : Timeout" + vbcrlf
+  lszMessage = lszMessage + "Arg10: RunMode (RUN_PLANNED_HOST or RUN_REMOTE or RUN_LOCAL -- RUN_PLANNED_HOST if not specified)" + vbcrlf
+  lszMessage = lszMessage + "Arg11: RunHost (to be specified when in RUN_REMOTE mode)" + vbcrlf
+
+  WScript.Echo lszMessage 
+  WScript.Quit 1
+
 Else
-  qcTimeout = 600
-End If	
 
+  qcServer = args.Item(0)
+  qcUser = args.Item(1)
+  qcPassword = args.Item(2)
+  qcDomain = args.Item(3)
+  qcProject = args.Item(4)
+  qcTestSetFolder = args.Item(5)
+  qcTestSetName = args.Item(6)
+  strXmlFile = args.Item(7)
+  qcTimeout = args.Item(8)
 
-test.ConnectToProject args.Item(0), args.Item(1), args.Item(2), args.Item(3), args.Item(4)
+  logMessage("Script parameters:")
+  logMessage("*************************************************")
+  logMessage("QC Server       : " & qcServer)
+  logMessage("QC UserName     : " & qcUser)
+  logMessage("QC Password     : ********")
+  logMessage("QC Domain       : " & qcDomain)
+  logMessage("QC Project      : " & qcProject)
+  logMessage("QC TestSetFolder: " & qcTestSetFolder)
+  logMessage("QC TestSetName  : " & qcTestSetName)
+  logMessage("XML Junit File  : " & strXmlFile)
+  logMessage("Timeout         : " & qcTimeout)
+  logMessage("*************************************************")
+  
+  ' default execution environment: the planned one
+  runMode = "RUN_PLANNED_HOST"
+  runHost = ""
+  
+  If args.Count >= 10 Then
+    runMode = args.Item(9)
+    logMessage("RunMode         : " & runMode)
+
+    If runMode = "RUN_PLANNED_HOST" or runMode = "RUN_REMOTE" or runMode = "RUN_LOCAL" then
+      If runMode = "RUN_REMOTE" then
+        If args.Count > 10 Then
+          runHost = args.Item(10)
+          logMessage("RunHost         : " & runHost)
+        Else
+          WScript.StdOut.WriteLine "When RunMode is set to RUN_REMOTE, you must specify the name of the host which will run the tests."
+          WScript.Quit 1
+        End if
+      ElseIf runMode = "RUN_LOCAL" then
+        Set WshNetwork = WScript.CreateObject("WScript.Network")
+        runHost = WshNetwork.ComputerName
+        logMessage("RunHost         : " & runHost)
+      End if
+    Else
+      WScript.StdOut.WriteLine "The RunMode parameter must be RUN_PLANNED_HOST, RUN_REMOTE or RUN_LOCAL."
+      WScript.Quit 1
+    End if
+
+  End If
+
+  logMessage("*************************************************")
+
+End if
+
+test.ConnectToProject qcServer, qcUser, qcPassword, qcDomain, qcProject
 If test.Connected Then
-  test.RunTestSet args.Item(5), args.Item(6), qcTimeout
+  test.RunTestSet qcTestSetFolder, qcTestSetName, qcTimeout, runMode, runHost
 End If
+
 If Not (test.ErrorMessage = "") Then
   WScript.StdOut.WriteLine test.ErrorMessage
-  test.WriteToXML args.Item(7)
+  test.WriteToXML strXmlFile
   WScript.Quit 1
 End If
+
 test.Disconnect
-test.WriteToXML args.Item(7)
+test.WriteToXML strXmlFile
 WScript.Quit 0

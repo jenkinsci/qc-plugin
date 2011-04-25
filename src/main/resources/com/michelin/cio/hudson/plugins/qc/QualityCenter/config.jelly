@@ -1,7 +1,8 @@
 <!--
   - The MIT License
   -
-  - Copyright (c) 2010, Manufacture Française des Pneumatiques Michelin, Thomas Maurel
+  - Copyright (c) 2010-2011, Manufacture Française des Pneumatiques Michelin,
+  - Thomas Maurel, Romain Seguy
   -
   - Permission is hereby granted, free of charge, to any person obtaining a copy
   - of this software and associated documentation files (the "Software"), to deal
@@ -68,8 +69,22 @@
     <f:entry title="${%Timeout}" field="qcTimeOut">
       <f:textbox/>
     </f:entry>
-    <f:entry title="${%TestSet Generated Report Name}" field="qcTSLogFile">
-      <f:textbox value="${h.defaulted(instance.qcTSLogFile,'qcreport-${TS_NAME}-${BUILD_NUMBER}.xml')}" />
-    </f:entry>
+    <f:advanced>
+      <f:entry title="${%Run Mode}" field="runMode">
+        <select name="language" class="setting-input">
+          <j:forEach var="runMode" items="${descriptor.runModes}">
+            <f:option selected="${runMode == instance.runMode}" value="${runMode}">
+              ${runMode}
+            </f:option>
+          </j:forEach>
+        </select>
+      </f:entry>
+      <f:entry title="${%Run Host}" field="runHost">
+        <f:textbox/>
+      </f:entry>
+      <f:entry title="${%TestSet Generated Report Name}" field="qcTSLogFile">
+        <f:textbox value="${h.defaulted(instance.qcTSLogFile,'qcreport-${TS_NAME}-${BUILD_NUMBER}.xml')}" />
+      </f:entry>
+    </f:advanced>
   </j:if>
 </j:jelly>
