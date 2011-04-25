@@ -495,7 +495,7 @@ public class QualityCenter extends Builder {
      * is not able to access such a method if it is placed, even statically,
      * directly into QualityCenter.</p>
      */
-    public String[] getLanguages() {
+    public String[] getRunModes() {
         return QualityCenter.RUN_MODES;
     }
   }
