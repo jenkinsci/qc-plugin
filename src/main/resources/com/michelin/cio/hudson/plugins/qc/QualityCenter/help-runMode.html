@@ -1,7 +1,7 @@
 <!--
   - The MIT License
   -
-  - Copyright (c) 2010, Manufacture Française des Pneumatiques Michelin, Thomas Maurel
+  - Copyright (c) 2011, Manufacture Française des Pneumatiques Michelin, Romain Seguy
   -
   - Permission is hereby granted, free of charge, to any person obtaining a copy
   - of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,12 @@
 -->
 
 <div>
-  URL pointant vers le dossier <code>qcbin</code> de l'application Web Quality
-  Center (par exemple <code>http://10.139.76.178/qcbin/</code>).<br/>
-  Cette URL est utilisée pour récupérer l'installeur <code>QCClient.msi</code>.
+  Defines how the test set has to be executed:<ul>
+  <li><b>RUN_PLANNED_HOST</b>: The test set will be run on the host defined in
+  Quality Center.</li>
+  <li><b>RUN_REMOTE</b>: The test set will be run on a host specified using the
+  <b>Run Host</b> field.</li>
+  <li><b>RUN_LOCAL</b>: The test set will be run on the machine which performs
+  the build.</li>
+  </ul>
 </div>

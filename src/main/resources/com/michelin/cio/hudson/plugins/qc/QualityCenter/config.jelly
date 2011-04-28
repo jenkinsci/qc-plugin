@@ -25,6 +25,15 @@
 
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
   <j:if test="${!empty(descriptor.clientInstallations)}">
+    <tr>
+      <td/>
+      <td colspan="2">
+        <div class="help" style="display:block;">
+          ${%DontForgetThePublisher}
+        </div>
+      </td>
+      <td/>
+    </tr>
     <f:entry title="${%Quality Center Installation}" field="qcClientInstallationName">
       <select name="qc.qcClientInstallationName" class="setting-input" field="">
         <j:forEach var="installation" items="${descriptor.clientInstallations}">
@@ -71,7 +80,7 @@
     </f:entry>
     <f:advanced>
       <f:entry title="${%Run Mode}" field="runMode">
-        <select name="language" class="setting-input">
+        <select name="runMode" class="setting-input">
           <j:forEach var="runMode" items="${descriptor.runModes}">
             <f:option selected="${runMode == instance.runMode}" value="${runMode}">
               ${runMode}
@@ -86,5 +95,16 @@
         <f:textbox value="${h.defaulted(instance.qcTSLogFile,'qcreport-${TS_NAME}-${BUILD_NUMBER}.xml')}" />
       </f:entry>
     </f:advanced>
+  </j:if>
+  <j:if test="${empty(descriptor.clientInstallations)}">
+    <tr>
+      <td/>
+      <td colspan="2">
+        <div class="help" style="display:block;">
+          ${%HowToConfigureThisPlugin}
+        </div>
+      </td>
+      <td/>
+    </tr>
   </j:if>
 </j:jelly>
