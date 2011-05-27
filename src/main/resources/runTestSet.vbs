@@ -508,8 +508,8 @@ Class QCTestRunner
           ' do nothing
         Else
           totalTime = totalTime + test.Duration
-          body =  body & vbTab & "<testcase classname=""" & domain & "." & project & "." & folder & "." & name & """ " & _
-                  "name=""" & test.Name & """ " & _
+          body =  body & vbTab & "<testcase classname=""" & domain & "." & project & "." & stripTags(folder) & "." & stripTags(name) & """ " & _
+                  "name=""" & stripTags(test.Name) & """ " & _
                   "time=""" & test.Duration  & ".0"">" & vbCrLf
           lStatus = ""
 
@@ -545,7 +545,7 @@ Class QCTestRunner
     header = header & "<testsuite errors=""" & numError & """ " & _
             "failures=""" & numFailure & """  " & _
             "hostname=""" & hostName &  """  " & _
-            "name=""" & domain & "." & project & "." & folder & "." & name & """  " & _
+            "name=""" & domain & "." & project & "." & stripTags(folder) & "." & stripTags(name) & """  " & _
             "tests=""" & numTest & """ " & _
             "time=""" & totalTime & ".0"" " & _
             "timestamp=""" & currentDate & """>"
