@@ -54,13 +54,13 @@ Function prefixWithZero(str, length)
     pre = String(length - len(str), "0")
   End If
   prefixWithZero = pre & str
-End Function 
+End Function
 
 Function stripTags(str)
   Dim regex
   Set regex = New RegExp
   With regex
-    .Pattern = "<|>"
+    .Pattern = "<|>|&"
     .IgnoreCase = True
     .Global = True
   End With
@@ -89,12 +89,12 @@ Class QCFailure
   Public Property Let Desc(iDesc)
     fDesc = iDesc
   End Property
-    
+
 End Class
 
 ' ------------------------------------------------------------------------------
 
-Class QCTest 
+Class QCTest
 
   Private tName         ' test case name
   Private tDuration     ' duration
@@ -296,12 +296,12 @@ Class QCTestRunner
                 WScript.StdOut.WriteLine "| " & addBlankSpaces(test.Name, 65) &  " | " & addBlankSpaces(test.ID, 6) & " | " & addBlankSpaces(RunHost, 20) &  "|"
                 WScript.StdOut.WriteLine generateLine(100)
                 Scheduler.RunOnHost(test.ID) = runHost
-      
+
               Case "RUN_REMOTE"
                 WScript.StdOut.WriteLine "| " & addBlankSpaces(test.Name, 65) &  " | " & addBlankSpaces(test.ID, 6) & " | " & addBlankSpaces(RunHost, 20) &  "|"
                 WScript.StdOut.WriteLine generateLine(100)
                 Scheduler.RunOnHost(test.ID) = runHost
-                
+
               Case "RUN_PLANNED_HOST"
                 WScript.StdOut.WriteLine "| " & addBlankSpaces(test.Name, 65) &  " | " & addBlankSpaces(test.ID, 6) & " | " & addBlankSpaces(test.HostName, 20) &  "|"
                 WScript.StdOut.WriteLine generateLine(100)
@@ -327,7 +327,7 @@ Class QCTestRunner
             i = i + 1
           Next
 
-          ' tests are actually run 
+          ' tests are actually run
           Scheduler.run
           WScript.StdOut.WriteBlankLines(2)
           WScript.StdOut.WriteLine "Running-Tests..."
@@ -335,7 +335,7 @@ Class QCTestRunner
           WScript.StdOut.WriteBlankLines(2)
           Set executionStatus = Scheduler.ExecutionStatus
 
-          ' let's wait for the tests to end ("normally" or because of the timeout
+          ' let's wait for the tests to end ("normally" or because of the timeout)
           While ((tsExecutionFinished = False) And (iter < timeout))
             iter = iter + 5
             executionStatus.RefreshExecStatusInfo "all", True
@@ -346,7 +346,7 @@ Class QCTestRunner
             For i = 1 To executionStatus.Count
               Set testExecStatusObj = executionStatus.Item(i)
               Set currentTest = targetTestSet.TSTestFactory.Item(testExecStatusObj.TSTestId)
-        
+
               WScript.StdOut.WriteLine "| " & addBlankSpaces(testExecStatusObj.TSTestId, 8) & _
                       addBlankSpaces(currentTest.Name, 70) & _
                       addBlankSpaces(testExecStatusObj.Status, 19) & "|"
@@ -368,7 +368,7 @@ Class QCTestRunner
               Set currentTest = targetTestSet.TSTestFactory.Item(testExecStatusObj.TSTestId)
 
               ' we search the id of the test in the tests list in order to update it
-              l_id = GetIdTestName(currentTest.Name) 
+              l_id = GetIdTestName(currentTest.Name)
               Set qTest = tests(l_id)
 
               ' duration and status are updated according to the run
@@ -382,12 +382,12 @@ Class QCTestRunner
                 qFailure.Name = testExecStatusObj.Status
                 qFailure.Desc = testExecStatusObj.Message
                 Set qTest.Failure = qFailure
-          
+
                 ' let's get some more info for addition in the result XML file
                 If testExecStatusObj.Status = "FinishedFailed" Then
                   qTest.FailureDesc = GenerateFailedLog(currentTest.LastRun)
                 Else
-                  qTest.FailureDesc = ""
+                  qTest.FailureDesc = testExecStatusObj.Status & " : " & testExecStatusObj.Message
                 End if
               End If
 
@@ -408,7 +408,7 @@ Class QCTestRunner
   End Sub
 
   Function GenerateFailedLog(p_Test)
-    Set stList = p_Test.StepFactory.NewList("")   
+    Set stList = p_Test.StepFactory.NewList("")
 
     l_szReturn = ""
     l_szFailedMessage = ""
@@ -424,13 +424,13 @@ Class QCTestRunner
 
     GenerateFailedLog = l_szFailedMessage
   End Function
-  
+
   Public Function GetIdTestName(p_szName)
     GetIdTestName = -1
 
     For i = 0 to Ubound(tests)
       Set qTest = tests(i)
-  
+
       If qTest Is Nothing Then
         ' do nothing
       Else
@@ -441,7 +441,7 @@ Class QCTestRunner
       End if
     Next
   End function
-  
+
   Public Sub Disconnect
     On Error Resume Next
     If tdConnection.ProjectConnected Then
@@ -486,7 +486,7 @@ Class QCTestRunner
     objStream.Charset = "UTF-8"
 
     WScript.StdOut.WriteLine generateLine(100)
-    WScript.StdOut.WriteLine "| " & addBlankSpaces("Test", 72) &  " | " & addBlankSpaces("Statut", 22) & "|"
+    WScript.StdOut.WriteLine "| " & addBlankSpaces("Test Name", 72) &  " | " & addBlankSpaces("Status", 22) & "|"
     WScript.StdOut.WriteLine generateLine(100)
 
     totalTime = 0
@@ -510,28 +510,26 @@ Class QCTestRunner
           totalTime = totalTime + test.Duration
           body =  body & vbTab & "<testcase classname=""" & domain & "." & project & "." & folder & "." & name & """ " & _
                   "name=""" & test.Name & """ " & _
-                  "time=""" & test.Duration  & ".0"" "
+                  "time=""" & test.Duration  & ".0"">" & vbCrLf
           lStatus = ""
 
           If test.Failure Is Nothing Then
-            body = body & "/>" & vbCrLf
+			body = body & vbTab & "</testcase>" & vbCrLf
             lStatus = "Passed"
-  
-          Elseif test.Status = "No Run" Then  'Cas ou le test n'a pas tourné
-            body = body & ">" & vbCrLf
+
+          Elseif test.Status = "No Run" or test.Status = "Condition Failed" Then  ' the test didn't run
             body = body & vbTab & vbTab & "<failure message=""" & test.Status & """ type=""" & test.Status & """>" & vbCrLf & _
-                    test.Status & vbCrLf & "</failure>" & vbCrLf
-                        
+                    "<![CDATA[" & test.Status & "]]>" & vbCrLf & "</failure>" & vbCrLf
+
             body = body & vbTab & "</testcase>" & vbCrLf
             numFailure = numFailure + 1
-            lStatus = "No Run"
+            lStatus = test.Status
           Else
-            body = body & ">" & vbCrLf
-  
+
             body = body & vbTab & vbTab & "<failure message=""" & stripTags(test.Failure.Desc) & """ type=""" & test.Failure.name & """>" & vbCrLf & _
-                    test.Failure.Name & " : " & stripTags(test.FailureDesc) & vbCrLf & _
+                    "<![CDATA[" & test.Failure.Name & " : " & test.FailureDesc & "]]>" & vbCrLf & _
                     "</failure>" & vbCrLf
-  
+
             body = body & vbTab & "</testcase>" & vbCrLf
             numFailure = numFailure + 1
             lStatus = test.Failure.Name
@@ -539,7 +537,7 @@ Class QCTestRunner
 
           WScript.StdOut.WriteLine "| " & addBlankSpaces(test.Name, 72) &  " | " & addBlankSpaces(lStatus, 22) & "|"
           WScript.StdOut.WriteLine generateLine(100)
-        
+
         End if
       Next
     End If
@@ -557,10 +555,10 @@ Class QCTestRunner
     objStream.SaveToFile fileName
     objStream.Close
     WScript.StdOut.WriteLine "Report Created"
-    
+
   End Sub
-  
-End Class 
+
+End Class
 
 ' ------------------------------------ Main ------------------------------------
 
@@ -585,7 +583,7 @@ If args.Count<9 Or args.Count>11 Then
   lszMessage = lszMessage + "Arg10: RunMode (RUN_PLANNED_HOST or RUN_REMOTE or RUN_LOCAL -- RUN_PLANNED_HOST if not specified)" + vbcrlf
   lszMessage = lszMessage + "Arg11: RunHost (to be specified when in RUN_REMOTE mode)" + vbcrlf
 
-  WScript.Echo lszMessage 
+  WScript.Echo lszMessage
   WScript.Quit 1
 
 Else
@@ -612,11 +610,11 @@ Else
   logMessage("XML Junit File  : " & strXmlFile)
   logMessage("Timeout         : " & qcTimeout)
   logMessage("*************************************************")
-  
+
   ' default execution environment: the planned one
   runMode = "RUN_PLANNED_HOST"
   runHost = ""
-  
+
   If args.Count >= 10 Then
     runMode = args.Item(9)
     logMessage("RunMode         : " & runMode)

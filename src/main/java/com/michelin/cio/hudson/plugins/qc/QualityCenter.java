@@ -336,6 +336,7 @@ public class QualityCenter extends Builder {
     this.parsedQcTSLogFile = Util.replaceMacro(env.expand(this.qcTSLogFile), varResolver);
 
     // Use cscript to run the vbscript and get the console output
+    
     args.add("cscript");
     args.add("/nologo");
     args.add(file);
