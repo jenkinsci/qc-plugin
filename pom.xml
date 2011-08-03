@@ -10,7 +10,7 @@
   <packaging>hpi</packaging>
   <version>1.2-SNAPSHOT</version>
   <name>Quality Center Plugin</name>
-  <url>http://wiki.jenkins-ci.org/display/HUDSON/Quality+Center+Plugin</url>
+  <url>http://wiki.jenkins-ci.org/display/JENKINS/Quality+Center+Plugin</url>
 
   <developers>
     <developer>
