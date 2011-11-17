@@ -1,9 +1,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>org.jvnet.hudson.plugins</groupId>
+    <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>1.375</version>
+    <version>1.409</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>qc</artifactId>
@@ -35,31 +35,4 @@
       <version>20070717</version>
     </dependency>
   </dependencies>
-
-  <!-- see http://groups.google.com/group/jenkinsci-dev/browse_thread/thread/83e34c639eec470a for the rationale behind this -->
-  <build>
-    <plugins>
-      <plugin>
-        <artifactId>maven-release-plugin</artifactId>
-        <configuration>
-          <goals>deploy</goals>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
-
-  <!-- see http://groups.google.com/group/jenkinsci-dev/browse_thread/thread/83e34c639eec470a for the rationale behind this -->
-  <scm>
-    <connection>scm:svn:https://guest@svn.jenkins-ci.org/trunk/hudson/plugins/qc/</connection>
-    <developerConnection>scm:svn:https://svn.jenkins-ci.org/trunk/hudson/plugins/qc/</developerConnection>
-    <url>https://hudson.dev.java.net/source/browse/hudson/trunk/hudson/plugins/qc</url>
-  </scm>
-
-  <!-- see http://groups.google.com/group/jenkinsci-dev/browse_thread/thread/6ea03cf2b527376c for the rationale behind this -->
-  <distributionManagement>
-    <repository>
-      <id>java.net-m2-repository</id>
-      <url>http://maven.jenkins-ci.org/content/repositories/releases/</url>
-    </repository>
-  </distributionManagement>
 </project>

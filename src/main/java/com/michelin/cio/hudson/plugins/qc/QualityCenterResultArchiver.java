@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2010, Manufacture Française des Pneumatiques Michelin, Thomas Maurel
+ * Copyright (c) 2010-2011, Manufacture Française des Pneumatiques Michelin, Thomas Maurel
  * Copyright (c) 2004-2009, Sun Microsystems, Inc., Kohsuke Kawaguchi, Martin Eigenbrodt, Tom Huybrechts, Yahoo!, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -76,15 +76,15 @@ public class QualityCenterResultArchiver extends Recorder implements Serializabl
       final List<String> names = new ArrayList<String>();
       // Get the TestSet report files names of the current build
       for(Builder builder : builders) {
-        if(builder instanceof QualityCenter) {
-          names.add(((QualityCenter)builder).getParsedQcTSLogFile());
-        }
+          if(builder instanceof QualityCenter) {
+              names.add(((QualityCenter)builder).getParsedQcTSLogFile());
+          }
       }
 
       // Has any QualityCenter builder been set up?
       if(names.isEmpty()) {
-        listener.getLogger().println(Messages.QualityCenterResultArchiver_NoBuilderSet());
-        return true;
+          listener.getLogger().println(Messages.QualityCenterResultArchiver_NoBuilderSet());
+          return true;
       }
 
       try {
@@ -101,11 +101,10 @@ public class QualityCenterResultArchiver extends Recorder implements Serializabl
                   // Transform the report file names list to a File Array,
                   // and add it to the DirectoryScanner includes set
                   for(String name : names) {
-                    
-                    File file = new File(ws, name);
-                    if(file.exists()) {
-                      files.add(file.getName());
-                    }
+                      File file = new File(ws, name);
+                      if(file.exists()) {
+                          files.add(file.getName());
+                      }
                   }
 
                   Object[] objectArray = new String[files.size()];
@@ -117,7 +116,7 @@ public class QualityCenterResultArchiver extends Recorder implements Serializabl
                       throw new AbortException("Report not found");
                   }
 
-                  return new TestResult(buildTime+(nowSlave-nowMaster), ds);
+                  return new TestResult(buildTime+(nowSlave-nowMaster), ds, true);
               }
           });
 
@@ -166,13 +165,13 @@ public class QualityCenterResultArchiver extends Recorder implements Serializabl
   @Extension
   public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
-    public String getDisplayName() {
-        return Messages.QualityCenterResultArchiver_DisplayName();
-    }
+      public String getDisplayName() {
+          return Messages.QualityCenterResultArchiver_DisplayName();
+      }
 
-    public boolean isApplicable(Class<? extends AbstractProject> jobType) {
-        return true;
-    }
+      public boolean isApplicable(Class<? extends AbstractProject> jobType) {
+          return true;
+      }
     
   }
 

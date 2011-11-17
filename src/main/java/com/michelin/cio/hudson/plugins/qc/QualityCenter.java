@@ -277,12 +277,14 @@ public class QualityCenter extends Builder {
       vbScript.copyFrom(vbsUrl);
 
       try {
-        // Run the VBScript
-        String logFile = runVBScript(build, launcher, listener, vbScript);
-        // Has the report been successfuly generated?
-        if(!projectWS.child(logFile).exists()) {
-          listener.fatalError(Messages.QualityCenter_ReportNotGenerated());
-          return false;
+        // For each TestSet, run the VBScript
+        for(String testSetName : Util.replaceMacro(env.expand(this.qcTSName), build.getBuildVariableResolver()).split("[\t\r\n,]+")) {
+          String logFile = runVBScript(testSetName, build, launcher, listener, vbScript);
+          // Has the report been successfuly generated?
+          if(!projectWS.child(logFile).exists()) {
+            listener.fatalError(Messages.QualityCenter_ReportNotGenerated());
+            return false;
+          }
         }
       }
       catch(IOException ioe) {
@@ -321,9 +323,9 @@ public class QualityCenter extends Builder {
   }
 
   /**
-   * Runs the TestSet through VBScript.
+   * Runs the given TestSet ({@code testSetName}) through VBScript.
    */
-  private String runVBScript(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener, FilePath file) throws IOException, InterruptedException {
+  private String runVBScript(String testSetName, AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener, FilePath file) throws IOException, InterruptedException {
     ArgumentListBuilder args = new ArgumentListBuilder();
     EnvVars env = build.getEnvironment(listener);
     VariableResolver<String> varResolver = build.getBuildVariableResolver();
@@ -353,7 +355,7 @@ public class QualityCenter extends Builder {
     args.add(Util.replaceMacro(env.expand(this.qcDomain), varResolver));
     args.add(Util.replaceMacro(env.expand(this.qcProject), varResolver));
     args.add(Util.replaceMacro(env.expand(this.qcTSFolder), varResolver));
-    args.add(Util.replaceMacro(env.expand(this.qcTSName), varResolver));
+    args.add(Util.replaceMacro(env.expand(testSetName), varResolver));
     args.add(this.parsedQcTSLogFile);
     args.add(this.qcTimeOut);
     args.add(runMode);
