@@ -73,6 +73,8 @@ public class QualityCenter extends Builder {
   public final static String RUN_MODE_PLANNED_HOST = "RUN_PLANNED_HOST";
   public final static String RUN_MODE_REMOTE = "RUN_REMOTE";
   public final static String[] RUN_MODES = { RUN_MODE_PLANNED_HOST, RUN_MODE_REMOTE, RUN_MODE_LOCAL };
+  
+  public final static int DEFAULT_TIMEOUT = 600;
 
   /** Quality Center installation name. */
   private final String qcClientInstallationName;
@@ -95,7 +97,7 @@ public class QualityCenter extends Builder {
   /** The name of the report file. */
   private final String qcTSLogFile;
   /** Timeout */
-  private final String qcTimeOut;
+  private final int qcTimeOut;
   /** The parsed name (env vars) of the report file. */
   private String parsedQcTSLogFile;
   private String runMode;
@@ -113,7 +115,7 @@ public class QualityCenter extends Builder {
             String qcTSFolder,
             String qcTSName,
             String qcTSLogFile,
-            String qcTimeOut,
+            int qcTimeOut,
             String runMode,
             String runHost) {
     this.qcClientInstallationName = qcClientInstallationName;
@@ -126,7 +128,12 @@ public class QualityCenter extends Builder {
     this.qcTSFolder = qcTSFolder;
     this.qcTSName = qcTSName;
     this.qcTSLogFile = qcTSLogFile;
-    this.qcTimeOut = qcTimeOut;
+    if(qcTimeOut <= 0) {
+      this.qcTimeOut = DEFAULT_TIMEOUT;
+    }
+    else {
+      this.qcTimeOut = qcTimeOut;
+    }
     if(Arrays.asList(RUN_MODES).contains(runMode)) {
       this.runMode = runMode;
     }
@@ -185,7 +192,7 @@ public class QualityCenter extends Builder {
     return qcTSName;
   }
 
-  public String getQcTimeOut() {
+  public int getQcTimeOut() {
     return qcTimeOut;
   }
   
@@ -346,7 +353,7 @@ public class QualityCenter extends Builder {
     args.add(Util.replaceMacro(env.expand(this.qcLogin), varResolver));
 
     // If no password, then replace by ""
-    if(!StringUtils.isBlank(this.qcPass)) {
+    if(StringUtils.isNotBlank(this.qcPass)) {
       args.addMasked(Util.replaceMacro(env.expand(this.qcPass), varResolver));
     }
     else {
