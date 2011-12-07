@@ -8,7 +8,7 @@
   </parent>
   <artifactId>qc</artifactId>
   <packaging>hpi</packaging>
-  <version>1.2</version>
+  <version>1.2.1-SNAPSHOT</version>
   <name>Quality Center Plugin</name>
   <url>http://wiki.jenkins-ci.org/display/HUDSON/Quality+Center+Plugin</url>
 
@@ -35,10 +35,4 @@
       <version>20070717</version>
     </dependency>
   </dependencies>
-
-  <scm>
-    <connection>scm:svn:https://svn.jenkins-ci.org/tags/qc-1.2</connection>
-    <developerConnection>scm:svn:https://svn.jenkins-ci.org/tags/qc-1.2</developerConnection>
-    <url>https://svn.jenkins-ci.org/tags/qc-1.2</url>
-  </scm>
 </project>
