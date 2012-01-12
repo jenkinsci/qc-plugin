@@ -1,8 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2010-2011, Manufacture Française des Pneumatiques Michelin, Thomas Maurel
- * Copyright (c) 2004-2009, Sun Microsystems, Inc., Kohsuke Kawaguchi, Martin Eigenbrodt, Tom Huybrechts, Yahoo!, Inc.
+ * Copyright (c) 2010-2012, Manufacture Française des Pneumatiques Michelin,
+ * Thomas Maurel, Romain Seguy, Sun Microsystems, Inc., Kohsuke Kawaguchi,
+ * Martin Eigenbrodt, Tom Huybrechts, Yahoo!, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -101,9 +102,11 @@ public class QualityCenterResultArchiver extends Recorder implements Serializabl
                   // Transform the report file names list to a File Array,
                   // and add it to the DirectoryScanner includes set
                   for(String name : names) {
-                      File file = new File(ws, name);
-                      if(file.exists()) {
-                          files.add(file.getName());
+                      if(name != null) {  // JENKINS-12389
+                          File file = new File(ws, name);
+                          if(file.exists()) {
+                              files.add(file.getName());
+                          }
                       }
                   }
 
