@@ -1,6 +1,6 @@
 ' The MIT License
 '
-' Copyright (c) 2010-2011, Manufacture Française des Pneumatiques Michelin,
+' Copyright (c) 2010-2012, Manufacture Française des Pneumatiques Michelin,
 ' Thomas Maurel, CollabNet, Johannes Nicolai, Shane Smart, Mickael Beluet,
 ' Romain Seguy
 '
@@ -514,7 +514,7 @@ Class QCTestRunner
           lStatus = ""
 
           If test.Failure Is Nothing Then
-			body = body & vbTab & "</testcase>" & vbCrLf
+            body = body & vbTab & "</testcase>" & vbCrLf
             lStatus = "Passed"
 
           Elseif test.Status = "No Run" or test.Status = "Condition Failed" Then  ' the test didn't run

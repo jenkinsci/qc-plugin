@@ -1,7 +1,8 @@
 <!--
   - The MIT License
   -
-  - Copyright (c) 2010, Manufacture Française des Pneumatiques Michelin, Thomas Maurel
+  - Copyright (c) 2010-212, Manufacture Française des Pneumatiques Michelin,
+  - Thomas Maurel, Romain Seguy
   -
   - Permission is hereby granted, free of charge, to any person obtaining a copy
   - of this software and associated documentation files (the "Software"), to deal
@@ -23,11 +24,19 @@
 -->
 
 <div>
-  Vous pouvez utiliser toutes les variables d'environnement usuelles plus :
+  <p>Nom du rapport à générer.</p>
+  <p>Si plusieurs TestSets doivent être exécutés, alors un rapport sera généré
+  par TestSet. En conséquence, vous devez vous assurer que le nom de chaque
+  rapport sera unique en y incluant le nom du TestSet correspondant (grâce à la
+  variable <code>${TS_NAME}</code> variable). Si ça n'est pas le cas, alors le
+  nom sera automatiquement modifié : il sera suffixé par un souligné suivi du
+  nom du TestSet.</p>
+  <p>Vous pouvez utiliser toutes les variables d'environnement usuelles plus :
   <ul>
     <li><code>${QC_DOMAIN}</code> pour le domaine Quality Center ;</li>
     <li><code>${QC_PROJECT}</code> pour le projet Quality Center ;</li>
     <li><code>${TS_FOLDER}</code> pour le répertoire du TestSet ;</li>
     <li><code>${TS_NAME}</code> pour le nom du TestSet.</li>
   </ul>
+  </p>
 </div>
