@@ -78,7 +78,10 @@ public class QualityCenterResultArchiver extends Recorder implements Serializabl
       // Get the TestSet report files names of the current build
       for(Builder builder : builders) {
           if(builder instanceof QualityCenter) {
-              names.addAll(((QualityCenter) builder).getTestSetLogFiles());
+              List<String> files = ((QualityCenter) builder).getTestSetLogFiles();
+              if(files != null && files.size() > 0) { // log files may not have been generated
+                  names.addAll(((QualityCenter) builder).getTestSetLogFiles());
+              }
           }
       }
 
