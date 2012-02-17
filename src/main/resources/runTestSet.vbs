@@ -2,7 +2,7 @@
 '
 ' Copyright (c) 2010-2012, Manufacture Française des Pneumatiques Michelin,
 ' Thomas Maurel, CollabNet, Johannes Nicolai, Shane Smart, Mickael Beluet,
-' Romain Seguy
+' Romain Seguy, Bhanu Pratap
 '
 ' Permission is hereby granted, free of charge, to any person obtaining a copy
 ' of this software and associated documentation files (the "Software"), to deal
@@ -246,11 +246,11 @@ Class QCTestRunner
         errorMsg = "Could not find TestSet " & tsName
       Else
         Set targetTestSet = tsList.Item(1)
-        WScript.StdOut.WriteBlankLines(2)
+        WScript.StdOut.WriteBlankLines(1)
         WScript.StdOut.WriteLine generateLine(100)
         WScript.StdOut.WriteLine "| " & addBlankSpaces("TestSet Name", 88) &  " | " & addBlankSpaces("ID", 6) & "|"
         WScript.StdOut.WriteLine generateLine(100)
-        WScript.StdOut.WriteLine "| " & addBlankSpaces(tsName, 88) &          " | " & addBlankSpaces(targetTestSet.ID, 6) &  "|"
+        WScript.StdOut.WriteLine "| " & addBlankSpaces(tsName, 88) & " | " & addBlankSpaces(targetTestSet.ID, 6) &  "|"
         WScript.StdOut.WriteLine generateLine(100)
 
         ' start the scheduler
@@ -281,7 +281,6 @@ Class QCTestRunner
               Scheduler.RunAllLocally = False
           End Select
 
-          WScript.StdOut.WriteBlankLines(2)
           WScript.StdOut.WriteLine "| " & addBlankSpaces("Number of tests: " & tList.Count, 97) &  "|"
           WScript.StdOut.WriteLine generateLine(100)
           WScript.StdOut.WriteLine "| " & addBlankSpaces("Test Name", 65) &  " | " & addBlankSpaces("ID", 6) & " | " & addBlankSpaces("Host", 20) &  "|"
@@ -329,10 +328,10 @@ Class QCTestRunner
 
           ' tests are actually run
           Scheduler.run
-          WScript.StdOut.WriteBlankLines(2)
+          WScript.StdOut.WriteBlankLines(1)
           WScript.StdOut.WriteLine "Running-Tests..."
           WScript.StdOut.WriteLine "Scheduler started around " & CStr(Now)
-          WScript.StdOut.WriteBlankLines(2)
+          WScript.StdOut.WriteBlankLines(1)
           Set executionStatus = Scheduler.ExecutionStatus
 
           ' let's wait for the tests to end ("normally" or because of the timeout)
@@ -353,11 +352,12 @@ Class QCTestRunner
             Next
             WScript.StdOut.WriteLine generateLine(100)
 
-            WScript.Sleep( 5000 )
+            WScript.Sleep(10000)
           Wend
 
           If iter < timeout Then
-            WScript.StdOut.WriteBlankLines(2)
+            WScript.StdOut.WriteBlankLines(1)
+            WScript.StdOut.WriteLine generateLine(100)
             WScript.StdOut.WriteLine "| " & addBlankSpaces("Tests results", 97) &  "|"
             WScript.StdOut.WriteLine generateLine(100)
             WScript.StdOut.WriteLine "| " & addBlankSpaces("Test", 72) &  " | " & addBlankSpaces("Result", 22) & "|"
@@ -397,14 +397,93 @@ Class QCTestRunner
               WScript.StdOut.WriteLine generateLine(100)
             Next
 
-            WScript.StdOut.WriteBlankLines(2)
+            WScript.StdOut.WriteBlankLines(1)
             WScript.StdOut.WriteLine "Scheduler finished around " & CStr(Now)
           Else
             errorMsg = "Timed out"
           End If
+
+          GenerateDetailedReport(tList)
         End If ' endif scheduler
       End If ' endif test set
     End If ' endif test set folder
+  End Sub
+
+  Sub GenerateDetailedReport(objTSTestList)
+    WScript.StdOut.WriteLine "Generating detailed report..."
+    WScript.StdOut.WriteBlankLines(1)
+    WScript.StdOut.WriteLine generateLine(100)
+
+    For i = 1 To objTSTestList.Count
+        Set objTest = objTSTestList.Item(i)
+        vTestCase = objTest.name
+        vStatus = objTest.Status
+
+        WScript.StdOut.WriteLine "| " & addBlankSpaces(vTestCase, 97) & "|"
+        WScript.StdOut.WriteLine generateLine(100)
+
+        Set objRun = objTest.LastRun
+        iStepCnt = 1
+        Set objStepFactory = objRun.StepFactory
+        Set objTSTestStepsList = objStepFactory.NewList("")
+' cf. detailed comments below
+'        vActual = ""
+
+        For Each objStep In objTSTestStepsList
+            vDesc = Trim(objStep.Field("ST_DESCRIPTION"))
+            vDesc = Replace(vDesc, "<html><body>", "")
+            vDesc = Replace(vDesc, "</body></html>", "")
+            remain = iStepCnt & ". " & vDesc
+            ' if length is longer than 100 chars, split it into multiple lines
+            Do While 1
+                If Len(remain) > 97 Then
+                    line = Left(remain, 97)
+                    WScript.StdOut.WriteLine "| " & addBlankSpaces(line, 97) & "|"
+                    remain = Right(remain, Len(remain) - 97)
+                Else
+                    WScript.StdOut.WriteLine "| " & addBlankSpaces(remain, 97) & "|"
+                    Exit Do
+                End If
+            Loop
+' cf. detailed comments below
+'            ' :> is a pattern that we're nearly sure to not find in the steps name; we'll use it later for splitting the string
+'            vActual = vActual & ":>" & objStep.Field("ST_ACTUAL")
+            iStepCnt = iStepCnt + 1
+        Next
+
+' From Romain:
+' The following code comes from https://groups.google.com/d/topic/jenkinsci-dev/xUE-qoL1F2M/discussion
+' I'm unsure about what vActual refers to: None of my samples produce an output which could explain
+' what we're talking about; If someone knows, please go ahead and uncomment (and fix)!
+'        WScript.StdOut.WriteLine "| " & addBlankSpaces("", 97) & "|"
+'        WScript.StdOut.WriteLine "| " & addBlankSpaces("Actual:", 97) & "|"
+'
+'        actualsArray = Split(vActual, ":>", -1, 1)
+'        For k = 0 To UBound(actualsArray)
+'            If Trim(actualsArray(k)) <> "" Then
+'                remain = Trim(actualsArray(k))
+'                remain = Replace(remain, "<html><body>", "")
+'                remain = Replace(remain, "</body></html>", "")
+'                ' if length is longer than 100 chars, split it into multiple lines
+'                Do While 1
+'                    If Len(remain) > 97 Then
+'                        line = Left(remain, 97)
+'                        WScript.StdOut.WriteLine "| " & addBlankSpaces(line, 97) & "|"
+'                        remain = Right(remain, Len(remain) - 97)
+'                    Else
+'                        WScript.StdOut.WriteLine "| " & addBlankSpaces(remain, 97) & "|"
+'                        Exit Do
+'                    End If
+'                Loop
+'            End If
+'        Next
+
+' From Romain: I'm really unsure about what status (take a look at how vStatus is defined) we're
+' talking about: It doesn't necessarily match with the actual automated test status...
+'        WScript.StdOut.WriteLine "| " & addBlankSpaces("", 97) & "|"
+'        WScript.StdOut.WriteLine "| " & addBlankSpaces("Test Result", 47) & " :: " & addBlankSpaces(vStatus, 46) & "|"
+        WScript.StdOut.WriteLine generateLine(100)
+    Next
   End Sub
 
   Function GenerateFailedLog(p_Test)
@@ -466,7 +545,8 @@ Class QCTestRunner
     Dim body
     Dim header
 
-    WScript.StdOut.WriteLine "Creating report..."
+    WScript.StdOut.WriteBlankLines(1)
+    WScript.StdOut.WriteLine "Generating report..."
     currentDate = YEAR(Date()) & _
             "-" & prefixWithZero(Month(Date()),2) & _
             "-" & prefixWithZero(Day(Date()),2) & _
@@ -474,8 +554,6 @@ Class QCTestRunner
             ":" & prefixWithZero(Minute(Now()),2) & _
             ":" & prefixWithZero(Second(Now()),2)
 
-    WScript.StdOut.WriteBlankLines(2)
-    WScript.StdOut.WriteLine "Generating report file"
     WScript.StdOut.WriteLine "Report file path: " & fileName
     WScript.StdOut.WriteBlankLines(1)
 
@@ -486,7 +564,7 @@ Class QCTestRunner
     objStream.Charset = "UTF-8"
 
     WScript.StdOut.WriteLine generateLine(100)
-    WScript.StdOut.WriteLine "| " & addBlankSpaces("Test Name", 72) &  " | " & addBlankSpaces("Status", 22) & "|"
+    WScript.StdOut.WriteLine "| " & addBlankSpaces("Test Name", 72) & " | " & addBlankSpaces("Status", 22) & "|"
     WScript.StdOut.WriteLine generateLine(100)
 
     totalTime = 0
