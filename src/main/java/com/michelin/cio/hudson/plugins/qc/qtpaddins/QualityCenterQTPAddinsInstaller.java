@@ -122,12 +122,6 @@ public class QualityCenterQTPAddinsInstaller extends ToolInstaller {
 
     // Get the URL to the bundled InstallShield silent install script template
     URL template = Hudson.getInstance().pluginManager.uberClassLoader.getResource(TEMPLATE_NAME);
-    File f;
-    try {
-      f = new File(template.toURI());
-    } catch(URISyntaxException e) {
-      f = new File(template.getPath());
-    }
 
     // Note from the code reviewer:  The following could clearly have been done
     // with Velocity (and it would surely have been faster), but, well, let's
@@ -155,7 +149,7 @@ public class QualityCenterQTPAddinsInstaller extends ToolInstaller {
     out.println(Messages.QualityCenterQTPAddinsInstaller_GeneratingInstallerISS());
     try {
       // Parse the template and put the result in a string
-      instalIss = engine.createTemplate(f).make(binding).toString();
+      instalIss = engine.createTemplate(template).make(binding).toString();
     } catch (Exception e) {
       log.fatalError(Messages.QualityCenterQTPAddinsInstaller_CouldntGenerateInstallerISS());
       throw new AbortException();
