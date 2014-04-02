@@ -1,7 +1,8 @@
 <!--
   - The MIT License
   -
-  - Copyright (c) 2010, Manufacture Française des Pneumatiques Michelin, Thomas Maurel
+  - Copyright (c) 2010-212, Manufacture Française des Pneumatiques Michelin,
+  - Thomas Maurel, Romain Seguy
   -
   - Permission is hereby granted, free of charge, to any person obtaining a copy
   - of this software and associated documentation files (the "Software"), to deal
@@ -23,11 +24,18 @@
 -->
 
 <div>
-  You can use all standard environment variables plus:
+  <p>Name of the report that will be generated.</p>
+  <p>If several test sets are run in one build step, one report will be generated
+  per test set. As such, you must ensure that the name will be unique by including
+  the test set name in it (through the <code>${TS_NAME}</code> variable). If it's
+  not the case, then the name will be automatically post fixed with an underscore
+  followed by the test set name.</p>
+  <p>You can use all standard environment variables plus:
   <ul>
     <li><code>${QC_DOMAIN}</code> for the current Quality Center domain;</li>
     <li><code>${QC_PROJECT}</code> for the current Quality Center project;</li>
     <li><code>${TS_FOLDER}</code> for the current TestSet folder;</li>
     <li><code>${TS_NAME}</code> for the TestSet name.</li>
   </ul>
+  </p>
 </div>

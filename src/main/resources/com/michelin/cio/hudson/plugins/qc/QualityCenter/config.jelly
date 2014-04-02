@@ -72,8 +72,8 @@
     <f:entry title="${%TestSet Folder}" field="qcTSFolder">
       <f:textbox/>
     </f:entry>
-    <f:entry title="${%TestSet Name}" field="qcTSName">
-      <f:textbox/>
+    <f:entry title="${%TestSets Name}" field="qcTSName">
+      <f:expandableTextbox/>
     </f:entry>
     <f:entry title="${%Timeout}" field="qcTimeOut">
       <f:textbox/>
