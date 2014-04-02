@@ -50,9 +50,9 @@
 
   <!-- see http://groups.google.com/group/jenkinsci-dev/browse_thread/thread/83e34c639eec470a for the rationale behind this -->
   <scm>
-    <connection>scm:svn:https://guest@svn.jenkins-ci.org/trunk/hudson/plugins/qc/</connection>
-    <developerConnection>scm:svn:https://svn.jenkins-ci.org/trunk/hudson/plugins/qc/</developerConnection>
-    <url>https://hudson.dev.java.net/source/browse/hudson/trunk/hudson/plugins/qc</url>
+    <connection>scm:git:git@github.com:jenkinsci/qc-plugin.git</connection>
+    <developerConnection>scm:git:git@github.com:jenkinsci/qc-plugin.git</developerConnection>
+    <url>https://github.com/jenkinsci/qc-plugin/</url>
   </scm>
 
   <!-- see http://groups.google.com/group/jenkinsci-dev/browse_thread/thread/6ea03cf2b527376c for the rationale behind this -->
