@@ -33,6 +33,11 @@
       <artifactId>com4j</artifactId>
       <version>20070717</version>
     </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>matrix-project</artifactId>
+      <version>1.2</version>
+    </dependency>
   </dependencies>
 
   <!-- see http://groups.google.com/group/jenkinsci-dev/browse_thread/thread/83e34c639eec470a for the rationale behind this -->
